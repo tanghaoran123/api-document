@@ -1,0 +1,91 @@
+---
+title: "Kling Omni-Image 生成"
+description: "Kling Omni 系列图像生成 API 支持多主体组合、参考图融合以及超高清图像创建。"
+api: "POST https://api.cloudwise.ai/v1/images/omni-image"
+---
+
+Omni-Image API 是 Kling 的综合图像能力接口，提供两种核心模型选项：
+
+* **kling-image-o1**：具有更强的逻辑理解能力，适合复杂的提示词和空间关系。
+* **kling-v3-omni**：专注于视觉美感和灵活的多主体融合。
+
+此 API 允许用户在 `prompt` 中精确引用上传的图像或主体库 ID（如 `<<<image_n>>>` 或 `<<<object_n>>>`），实现图像条件生成和角色一致性等高级工作流。
+
+### 认证方式
+
+该 API 采用 Bearer Token 认证。请在请求头中包含您的 API Key：`Authorization: Bearer YOUR_API_KEY`。
+
+---
+
+### 请求参数
+
+#### 基础配置
+
+<ParamField body="model_name" type="string" default="kling-image-o1">
+  模型选项：`kling-image-o1` 或 `kling-v3-omni`。
+</ParamField>
+
+<ParamField body="prompt" type="string" required>
+  文本提示词（最多 2500 个字符）。
+</ParamField>
+
+<ParamField body="resolution" type="string" default="1k">
+  分辨率：`1k` (标清), `2k` (高清), `4k` (超清)。
+</ParamField>
+
+<ParamField body="aspect_ratio" type="string" default="auto">
+  宽高比：支持 `16:9`, `9:16`, `1:1`, `4:3` 等。
+</ParamField>
+
+#### 主体与参考 (核心)
+
+<ParamField body="image_list" type="array">
+  参考图像列表。支持 URL 或 Base64。单文件 < 10MB。
+</ParamField>
+
+<ParamField body="element_list" type="array">
+  主体 ID 列表。根据主体库中的 ID 锁定特定角色。
+</ParamField>
+
+<Warning>
+  **注意**：参考主体数量 + 参考图像数量 ≤ 10。
+</Warning>
+
+#### 输出控制
+
+<ParamField body="result_type" type="string">
+  `single`（单图模式）或 `series`（组图/序列模式）。
+</ParamField>
+
+<ParamField body="n" type="int">
+  仅在 `single` 模式下生效。生成 1-9 张图像。
+</ParamField>
+
+<ParamField body="series_amount" type="int">
+  仅在 `series` 模式下生效。生成 2-9 张相关图像。
+</ParamField>
+
+---
+
+### 请求示例
+
+<CodeGroup>
+
+```bash 多图融合任务 (kling-image-o1)
+curl --request POST \
+  --url [https://api.cloudwise.ai/api/v1/images/omni-image](https://api.cloudwise.ai/api/v1/images/omni-image) \
+  --header 'Authorization: Bearer $YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "model_name": "kling-image-o1",
+    "prompt": "Merge all people from the input images into <<<object_1>>>",
+    "element_list": [
+        { "element_id": 829836802793406551 }
+    ],
+    "image_list": [
+        { "image": "[https://example.com/ref_1.png](https://example.com/ref_1.png)" },
+        { "image": "[https://example.com/ref_2.png](https://example.com/ref_2.png)" }
+    ],
+    "resolution": "2k",
+    "aspect_ratio": "3:2"
+  }'
